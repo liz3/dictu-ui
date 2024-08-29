@@ -1,0 +1,6 @@
+[submodule "third-party/glfw"]
+	path = third-party/glfw
+	url = https://github.com/glfw/glfw
+[submodule "third-party/skia"]
+	path = third-party/skia
+	url = https://skia.googlesource.com/skia.git

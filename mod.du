@@ -1,0 +1,172 @@
+import FFI;
+import Random;
+import Path;
+import Math;
+const mod = FFI.load(Path.join([Path.dirname(__file__), "build", "libdictu-ui.dylib"]));
+def getColor(r,g,b,a=255) {
+  return {"r": r, "g": g, "b": b, "a": a};
+}
+def toWindow(title, c) {
+  const window = mod.createWindow(title, c.width, c.height);
+  const data = c.render();
+  window.copyBuffer(data, c.width, c.height, 2);
+  window.render();
+  return window;
+}
+def waitWindows(windows) {
+  var local = windows;
+  while {
+    var remove = [];
+    local.forEach(def(window) => {
+      if (window.shouldClose())
+        remove.push(window);
+      else
+        window.render();
+    });
+    remove.forEach(def(w) => {
+     local.remove(w);
+      w.close();
+    });
+    if(local.len() == 0)
+      break;
+     local[0].waitEvents();
+  }
+}
+def getRandomColor() {
+  return getColor(Random.range(0, 255), Random.range(0, 255), Random.range(0, 255));
+}
+def pie(name, width_in, height_in, entries) {
+  const canvas = mod.skiaSurface(width, height);
+  canvas.clear(getColor(255,255,255));
+  var startAngle = 0.0;
+  const left = 20;
+  const top = 20;
+  const width = width_in - (left);
+  const height = height_in - (top);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = height * 0.5;
+  entries.forEach(def (entry) => {
+    const value = entry[0];
+    var angle = 360.0 * value;
+    const path = canvas.createPath();
+    path.moveTo(canvas.width / 2, canvas.height / 2);
+    canvas.drawPath(path, getColor(Random.range(0, 255), Random.range(0, 255), Random.range(0,255)));
+    if(entry.len() > 1) {
+      const nameAngle = startAngle + (value / 2 / 1) * 2 * Math.pi;
+      const start_x = centerX + radius * Math.cos(nameAngle);
+      const start_y = centerY + radius * Math.sin(nameAngle);
+      canvas.drawText(start_x, start_y, entry[1], 14, getColor(0,0,0));
+    }
+    startAngle = startAngle + angle;
+  });
+  return canvas;
+ }
+def graph(name, width, height, entries, opts) {
+  const work_width = width * 0.9;
+  const work_height = height * 0.7;
+  const padding = (width - work_width) / 2;
+  const top_offset = 15;
+  const canvas = mod.skiaSurface(width, height);
+  var name_offset = padding;
+  canvas.clear(getColor(255,255,255));
+  if(opts.exists("markings")) {
+    const markings = opts["markings"];
+    markings.forEach(def (marking) => {
+      const start_y = work_height - work_height * marking[0] + top_offset;
+      if(marking.len() > 1) {
+        canvas.drawText(5, start_y, marking[1], 14, getColor(0,0,0));
+      }
+      const path = canvas.createPath();
+      path.moveTo(padding, start_y);
+      path.lineTo(padding + work_width, start_y);
+      canvas.drawPathStroke(path, 1, getColor(50, 50, 50, 255 * 0.8));
+    });
+  }
+  if (opts.exists("markers")) {
+    const markers = opts["markers"];
+    const marker_len = work_width / (markers.len() == 1 ? 1 : markers.len()-1);
+    var lOffset = padding;
+    markers.forEach(def(marker) => {
+      const text = marker.len() > 1 ? marker[1] : ("{}".format(marker[0]));
+      const xOffset = marker.len() > 1 ? (work_width * marker[0]) + padding : lOffset;
+      const path = canvas.createPath();
+      path.moveTo(xOffset, top_offset);
+      path.lineTo(xOffset, top_offset + work_height);
+      canvas.drawPathStroke(path, 1, getColor(50, 50, 50, 255 * 0.8));
+      canvas.drawText(xOffset, top_offset + work_height - 14, text, 14, getColor(0,0,0));
+      lOffset += marker_len;
+    });
+  }
+  entries.forEach(def (graph) => {
+    const color = getRandomColor();
+    const points = graph[0];
+    const point_len = points.len() > 1 ? work_width / (points.len() -1) : 1;
+    var offset = padding;
+    const path = canvas.createPath();
+    if(points.len() == 1) {
+      const point = points[0];
+      path.moveTo(offset, work_height - work_height * point + top_offset);
+      path.lineTo(work_width + offset, work_height - work_height * point + top_offset);
+    } else {
+      path.moveTo(offset, work_height - work_height * points[0] + top_offset);
+      for(var i = 1; i < points.len(); i += 1) {
+        offset += point_len;
+        path.lineTo(offset, work_height - work_height * points[i] + top_offset);
+      }
+    }
+    canvas.drawPathStroke(path, 3, color);
+    const p2 = canvas.createPath();
+    p2.moveTo(name_offset, work_height + 25);
+    p2.lineTo(name_offset + 15, work_height + 25);
+    canvas.drawPathStroke(p2, 10, color);
+    name_offset += 20;
+    if(graph.len() > 1) {
+      canvas.drawText(name_offset, work_height + 30, graph[1], 14, color);
+      name_offset += canvas.measureText(graph[1], 14) + 10;
+    }
+  });
+  return canvas;
+}
+def plot(width, height, entries, opts) {
+  const work_height = height * 0.9;
+  var l_offset = 0;
+  const canvas = mod.skiaSurface(width, height);
+  canvas.clear(getColor(255,255,255));
+  if(opts.exists("markers")) {
+    const markers = opts["markers"];
+    markers.forEach(def (marking) => {
+      const height_needed = work_height * marking[0];
+      const start_y = work_height - height_needed;
+      canvas.drawText(1, start_y, marking[1], 14, getColor(50, 50, 50));
+      const path = canvas.createPath();
+      path.moveTo(1, start_y + 1);
+      path.lineTo(width, start_y + 1);
+      canvas.drawPathStroke(path, 1, getColor(50, 50, 50));
+      const tw = canvas.measureText(marking[1], 14);
+      if(tw > 20 and tw -20 > l_offset) { l_offset = width - 20; }
+    });
+  }
+  const work_width = width - (40 + l_offset);
+  const text_height = height * 0.1;
+  const row_width = Math.min(work_width / entries.len(), 60);
+  const total_needed = row_width * entries.len();
+  var x_offset = (width - total_needed) / 2;
+  if (l_offset > 0) { x_offset += 20; }
+  entries.forEach(def (v) => {
+    const color = opts.exists("color") ? opts["color"] : getRandomColor();
+    const entry = v[0];
+    const row_padding = row_width * 0.15;
+    const entry_width = row_width - row_padding;
+    const height_needed = work_height * entry;
+    const start_y = work_height - height_needed;
+    canvas.drawRect(x_offset + row_padding / 2, start_y, entry_width, height_needed, 0, color);
+
+    if(v.len() > 1) {
+      const name = v[1];
+      canvas.drawText(x_offset + row_padding / 2, work_height + 14, name, 12, getColor(50, 50, 50));
+    }
+    x_offset += row_width;
+  });
+  return canvas;
+}
