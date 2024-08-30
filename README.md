@@ -20,7 +20,7 @@ python3 tools/git-sync-deps
 python3 bin/fetch-ninja
 python3 bin/fetch-gn
 ```
-###Windows
+### Windows
 Generate the Build files
 ```
 bin\gn gen out\Release --args="is_official_build=true is_component_build=true skia_enable_tools=true skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false skia_use_system_zlib=false skia_use_expat=false skia_enable_ganesh=false"
@@ -29,7 +29,7 @@ Build:
 ```
 third_party\ninja\ninja.exe -C out\Release
 ```
-###MacOS/Linux
+### MacOS/Linux
 Generate the Build files
 ```
 bin/gn gen out/Release --args='is_official_build=true skia_enable_tools=true skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false extra_cflags_cc=["-frtti"] skia_use_system_zlib=false'
@@ -50,13 +50,13 @@ mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
-###Windows
+### Windows
 First build the library:
 `cmake --build . --config Release`
 
 Then you need to copy the DLL's from `third-party\skia\out\Release` into `build\Release`. That is required for it to run.
 
-###MacOS/Linux
+### MacOS/Linux
 Build the library: `make -j`
 
 ## Usage
