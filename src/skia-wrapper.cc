@@ -144,7 +144,7 @@ void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
 #endif
 #ifdef __linux__
-  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig();
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig(nullptr);
 #endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
@@ -177,7 +177,7 @@ float textWidthWithFont(DictuSkiaInstance *instance, const char *text,
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
 #endif
 #ifdef __linux__
-  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig();
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig(nullptr);
 #endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
