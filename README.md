@@ -39,7 +39,7 @@ If you are on Apple sillicon append `target_cpu="arm64"` to `--args=`
 
 Build:
 ```
-third_party\ninja\ninja -C out\Release
+third_party/ninja/ninja -C out/Release
 ```
 
 Building skia will take a while.
