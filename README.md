@@ -33,7 +33,7 @@ third_party\ninja\ninja.exe -C out\Release
 ### MacOS/Linux
 Generate the Build files
 ```
-bin/gn gen out/Release --args='is_official_build=true skia_enable_tools=true skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false extra_cflags_cc=["-frtti"] skia_use_system_zlib=false'
+bin/gn gen out/Release --args='is_official_build=true skia_enable_tools=false skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false extra_cflags_cc=["-frtti"] skia_use_system_zlib=false'
 ```
 If you are on Apple sillicon append `target_cpu="arm64"` to `--args=`
 

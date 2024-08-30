@@ -1,14 +1,21 @@
 #ifndef DICTU_UI_H
 #define DICTU_UI_H
 
-#include "glad.h"
 #include <dictu-include.h>
-#include <GLFW/glfw3.h>
+
 #include <stdint.h>
 #include "la.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#define AS_SKIA_SURFACE(v) ((DictuSkiaInstance *)AS_ABSTRACT(v)->data)
+#define AS_SKIA_PATH(v) ((void *)AS_ABSTRACT(v)->data)
+
+#ifdef DICTU_UI_WINDOW_API
+#include "glad.h"
+#include <GLFW/glfw3.h>
 
 #define IMAGE_SHADER_VERT                                                      \
   "#version 330 core\n"                                                        \
@@ -126,8 +133,6 @@ RgbaColor clear_color;
 } UiInstance;
 
 #define AS_UI_INSTANCE(v) ((UiInstance *)AS_ABSTRACT(v)->data)
-#define AS_SKIA_SURFACE(v) ((DictuSkiaInstance *)AS_ABSTRACT(v)->data)
-#define AS_SKIA_PATH(v) ((void *)AS_ABSTRACT(v)->data)
 
 
 
@@ -158,7 +163,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void append_event(Event event, UiInstance* instance);
 
+#endif
+
 static Value dictuUIDecodePng(DictuVM *vm, int argCount, Value *args);
+
+static Value dictuUIEncodePng(DictuVM *vm, int argCount, Value *args);
 
 static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args);
 

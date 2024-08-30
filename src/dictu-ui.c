@@ -1,21 +1,27 @@
 #include "dictu-ui.h"
+#ifdef DICTU_UI_SOURCES
 #include "GLFW/glfw3.h"
+#endif
+#include "la.h"
 #include "dictu-include.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <lodepng.h>
-#include "la.h"
 #include "skia-wrapper.h"
 
+#ifdef DICTU_UI_WINDOW_API
 List g_list;
 bool loaded_glad;
+#endif
 
 int dictu_ffi_init(DictuVM *vm, Table *method_table) {
   // mongoc_init();
-  defineNative(vm, method_table, "createWindow", dictuUICreateInstance);
   defineNative(vm, method_table, "decodePng", dictuUIDecodePng);
+  defineNative(vm, method_table, "encodePng", dictuUIEncodePng);
   defineNative(vm, method_table, "skiaSurface", dictuUISkiaSurface);
+  #ifdef DICTU_UI_WINDOW_API
+  defineNative(vm, method_table, "createWindow", dictuUICreateInstance);
   // defineNative(vm, method_table, "objectId", dictu_mongo_object_id);
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -26,20 +32,10 @@ int dictu_ffi_init(DictuVM *vm, Table *method_table) {
   g_list.head = NULL;
   g_list.tail = NULL;
   loaded_glad = false;
+  #endif
   return 0;
 }
 
-void freeDictuIUInstance(DictuVM *vm, ObjAbstract *abstract) {
-  // FREE_ARRAY(vm, uint8_t, buffer->bytes, buffer->size);
-}
-
-char *DictuIUInstanceToString(ObjAbstract *abstract) {
-  UNUSED(abstract);
-
-  char *bufferString = malloc(sizeof(char) * 13);
-  snprintf(bufferString, 13, "<UiInstance>");
-  return bufferString;
-}
 void freeDictuPng(DictuVM *vm, ObjAbstract *abstract) {
   // FREE_ARRAY(vm, uint8_t, buffer->bytes, buffer->size);
 }
@@ -52,8 +48,8 @@ char *DictuPngToString(ObjAbstract *abstract) {
   return bufferString;
 }
 void freeDictuSkiaSurface(DictuVM *vm, ObjAbstract *abstract) {
-  if(abstract->data) {
-    DictuSkiaInstance* instance = (DictuSkiaInstance*)abstract->data;
+  if (abstract->data) {
+    DictuSkiaInstance *instance = (DictuSkiaInstance *)abstract->data;
     disposeInstance(instance);
     abstract->data = NULL;
   }
@@ -106,8 +102,7 @@ static Value dictuUISkiaSurfaceDrawRectOutline(DictuVM *vm, int argCount,
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
     drawRectOutline(instance, AS_NUMBER(args[1]), AS_NUMBER(args[2]),
                     AS_NUMBER(args[3]), AS_NUMBER(args[4]), AS_NUMBER(args[5]),
-                    AS_NUMBER(args[6]),
-                    colorToVec(vm, args[7]));
+                    AS_NUMBER(args[6]), colorToVec(vm, args[7]));
   }
   return NIL_VAL;
 }
@@ -118,8 +113,7 @@ static Value dictuUISkiaSurfaceDrawText(DictuVM *vm, int argCount,
     ObjString *str = AS_STRING(args[3]);
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
     drawText(instance, AS_NUMBER(args[1]), AS_NUMBER(args[2]), str->chars,
-             AS_NUMBER(args[4]),
-             colorToVec(vm, args[5]));
+             AS_NUMBER(args[4]), colorToVec(vm, args[5]));
   }
   return NIL_VAL;
 }
@@ -142,8 +136,7 @@ static Value dictuUISkiaSurfaceMeasureText(DictuVM *vm, int argCount,
   if (argCount == 2) {
     ObjString *str = AS_STRING(args[1]);
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-    return textWidth(instance, 
-                     str->chars, AS_NUMBER(args[2]));
+    return textWidth(instance, str->chars, AS_NUMBER(args[2]));
   }
   return NIL_VAL;
 }
@@ -154,8 +147,8 @@ static Value dictuUISkiaSurfaceMeasureTextWithFont(DictuVM *vm, int argCount,
     ObjString *str = AS_STRING(args[1]);
     ObjString *fontstr = AS_STRING(args[2]);
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-    return textWidthWithFont(instance,
-                             str->chars, fontstr->chars, AS_NUMBER(args[3]));
+    return textWidthWithFont(instance, str->chars, fontstr->chars,
+                             AS_NUMBER(args[3]));
   }
   return NIL_VAL;
 }
@@ -203,17 +196,16 @@ static Value dictuUISkiaSurfaceDrawPath(DictuVM *vm, int argCount,
   if (argCount != 2)
     return NIL_VAL;
   DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-  drawPath(instance, AS_SKIA_PATH(args[1]),
-           colorToVec(vm, args[2]));
+  drawPath(instance, AS_SKIA_PATH(args[1]), colorToVec(vm, args[2]));
   return NIL_VAL;
 }
 static Value dictuUISkiaSurfaceDrawPathStroke(DictuVM *vm, int argCount,
-                                        Value *args) {
+                                              Value *args) {
   if (argCount != 3)
     return NIL_VAL;
   DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-  drawPathStroke(instance, AS_SKIA_PATH(args[1]),AS_NUMBER(args[2]),
-           colorToVec(vm, args[3]));
+  drawPathStroke(instance, AS_SKIA_PATH(args[1]), AS_NUMBER(args[2]),
+                 colorToVec(vm, args[3]));
   return NIL_VAL;
 }
 static Value dictuUISkiaSurfaceGetPath(DictuVM *vm, int argCount, Value *args) {
@@ -250,7 +242,8 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args) {
   defineNative(vm, &abstract->values, "render", dictuUISkiaSurfaceRender);
   defineNative(vm, &abstract->values, "clear", dictuUISkiaSurfaceClearColor);
   defineNative(vm, &abstract->values, "drawPath", dictuUISkiaSurfaceDrawPath);
-  defineNative(vm, &abstract->values, "drawPathStroke", dictuUISkiaSurfaceDrawPathStroke);
+  defineNative(vm, &abstract->values, "drawPathStroke",
+               dictuUISkiaSurfaceDrawPathStroke);
   defineNative(vm, &abstract->values, "createPath", dictuUISkiaSurfaceGetPath);
 
   DictuSkiaInstance *instance =
@@ -263,12 +256,44 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args) {
   pop(vm);
   return OBJ_VAL(abstract);
 }
+static Value dictuUIEncodePng(DictuVM *vm, int argCount, Value *args) {
+  if (argCount < 3 || !IS_STRING(args[0]) || !IS_NUMBER(args[1]) ||
+      !IS_NUMBER(args[2]))
+    return NIL_VAL;
+  ObjString *data = AS_STRING(args[0]);
+  uint32_t width = AS_NUMBER(args[1]);
+  uint32_t height = AS_NUMBER(args[2]);
+  uint8_t *out;
+  size_t out_size;
+  LodePNGColorType type = LCT_RGBA;
+  if (argCount == 4 && IS_NUMBER(args[3])) {
+    int input_format = AS_NUMBER(args[3]);
+    uint8_t *copy = malloc(data->length);
+    memcpy(copy, data->chars, data->length);
+    if (input_format == 2) { // BGRA
+      for (size_t i = 0; i < data->length; i += 4) {
+        uint8_t b = copy[i];
+        copy[i] = copy[i + 2]; // swap red to first
+        copy[i + 2] = b;       // set third to blue
+      }
+    } else if (input_format == 1) {
+      type = LCT_RGB;
+    }
+    lodepng_encode_memory(&out, &out_size, copy, width, height, type, 8);
+    free(copy);
+  } else {
+    lodepng_encode_memory(&out, &out_size, data->chars, width, height, type, 8);
+  }
+  Value outv = OBJ_VAL(copyString(vm, out, out_size));
+  free(out);
+  return outv;
+}
 static Value dictuUIDecodePng(DictuVM *vm, int argCount, Value *args) {
   if (argCount != 1 || !IS_STRING(args[0]))
     return NIL_VAL;
   ObjString *str = AS_STRING(args[0]);
   ObjAbstract *abstract =
-      newAbstract(vm, freeDictuIUInstance, DictuIUInstanceToString);
+      newAbstract(vm, freeDictuPng, DictuPngToString);
   push(vm, OBJ_VAL(abstract));
   uint32_t w, h;
   uint8_t *data;
@@ -281,6 +306,19 @@ static Value dictuUIDecodePng(DictuVM *vm, int argCount, Value *args) {
   free(data);
   return OBJ_VAL(abstract);
 }
+#ifdef DICTU_UI_WINDOW_API
+void freeDictuIUInstance(DictuVM *vm, ObjAbstract *abstract) {
+  // FREE_ARRAY(vm, uint8_t, buffer->bytes, buffer->size);
+}
+
+char *DictuIUInstanceToString(ObjAbstract *abstract) {
+  UNUSED(abstract);
+
+  char *bufferString = malloc(sizeof(char) * 13);
+  snprintf(bufferString, 13, "<UiInstance>");
+  return bufferString;
+}
+
 static Value dictuUICopyBuffer(DictuVM *vm, int argCount, Value *args) {
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
   if (argCount < 3 || !IS_STRING(args[1]) || !IS_NUMBER(args[2]) ||
@@ -476,7 +514,6 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
   ev_data->action = action;
   Event event = {MOUSE_BUTTON, ev_data};
   append_event(event, instance);
-
 }
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
   ListEntry *entry = list_find_window(&g_list, window);
@@ -540,7 +577,8 @@ static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
       dictSet(vm, d, OBJ_VAL(copyString(vm, "alt", 3)), BOOL_VAL(data->is_alt));
       dictSet(vm, d, OBJ_VAL(copyString(vm, "meta", 4)),
               BOOL_VAL(data->is_meta));
-      dictSet(vm, d, OBJ_VAL(copyString(vm, "button", 6)), NUMBER_VAL(data->key));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "button", 6)),
+              NUMBER_VAL(data->key));
       dictSet(vm, d, OBJ_VAL(copyString(vm, "mods", 4)),
               NUMBER_VAL(data->mods));
       dictSet(vm, d, OBJ_VAL(copyString(vm, "action", 6)),
@@ -557,11 +595,10 @@ static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
       dictSet(vm, d, OBJ_VAL(copyString(vm, "meta", 4)),
               BOOL_VAL(data->is_meta));
       dictSet(vm, d, OBJ_VAL(copyString(vm, "x", 1)), NUMBER_VAL(data->x));
-      dictSet(vm, d, OBJ_VAL(copyString(vm, "y", 1)),
-              NUMBER_VAL(data->y));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "y", 1)), NUMBER_VAL(data->y));
       writeValueArray(vm, &list->values, OBJ_VAL(d));
       free(data);
-    }  else if (ev.type == WINDOW_FOCUS) {
+    } else if (ev.type == WINDOW_FOCUS) {
       bool *data = (bool *)ev.data;
       dictSet(vm, d, OBJ_VAL(copyString(vm, "type", 4)),
               OBJ_VAL(copyString(vm, "window_focus", 12)));
@@ -589,7 +626,7 @@ static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
   return OBJ_VAL(list);
 }
 static Value dictuUIKeyState(DictuVM *vm, int argCount, Value *args) {
-  if(argCount < 1 || !IS_NUMBER(args[1]))
+  if (argCount < 1 || !IS_NUMBER(args[1]))
     return NIL_VAL;
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
   return NUMBER_VAL(glfwGetKey(instance->window, AS_NUMBER(args[1])));
@@ -805,31 +842,6 @@ GLint get_type_enum(Image *in, uint8_t type) {
   }
   return 0;
 }
-
-Vec4f colorToVec(DictuVM* vm, Value v) {
-  float f = 255;
-  int32_t r,g,b,a;
-  ObjDict* d = AS_DICT(v);
-  for(size_t i = 0; i < d->capacityMask+1; i++){
-    if(IS_EMPTY(d->entries[i].key))
-      continue;
-    ObjString* key = AS_STRING(d->entries[i].key);
-    int32_t value = AS_NUMBER(d->entries[i].value);
-    if(strcmp(key->chars, "r") == 0)
-      r = value;
-    if(strcmp(key->chars, "g") == 0)
-      g = value;
-    if(strcmp(key->chars, "b") == 0)
-      b = value;
-    if(strcmp(key->chars, "a") == 0)
-      a = value;
-  }
-  #ifdef _WIN32
-  return vec4f((float)b / f, (float)g / f, (float)r / f, (float)a / f);
-  #else
-    return vec4f((float)r / f, (float)g / f, (float)b / f, (float)a / f);
-#endif
-}
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   ListEntry *entry = list_find_window(&g_list, window);
   if (entry == NULL)
@@ -845,4 +857,30 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   ev_data->width = width;
   Event ev = {WINDOW_RESIZE, ev_data};
   append_event(ev, instance);
+}
+#endif
+
+Vec4f colorToVec(DictuVM *vm, Value v) {
+  float f = 255;
+  int32_t r, g, b, a;
+  ObjDict *d = AS_DICT(v);
+  for (size_t i = 0; i < d->capacityMask + 1; i++) {
+    if (IS_EMPTY(d->entries[i].key))
+      continue;
+    ObjString *key = AS_STRING(d->entries[i].key);
+    int32_t value = AS_NUMBER(d->entries[i].value);
+    if (strcmp(key->chars, "r") == 0)
+      r = value;
+    if (strcmp(key->chars, "g") == 0)
+      g = value;
+    if (strcmp(key->chars, "b") == 0)
+      b = value;
+    if (strcmp(key->chars, "a") == 0)
+      a = value;
+  }
+#ifdef _WIN32
+  return vec4f((float)b / f, (float)g / f, (float)r / f, (float)a / f);
+#else
+  return vec4f((float)r / f, (float)g / f, (float)b / f, (float)a / f);
+#endif
 }

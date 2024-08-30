@@ -2,26 +2,40 @@ cmake_minimum_required(VERSION 3.16.3)
 PROJECT("dictu-ui")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-add_library(dictu-ui SHARED src/dictu-ui.c src/skia-wrapper.cc src/la.c third-party/glad/glad.c third-party/lodepng/lodepng.c)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(third-party/glfw)
 
+option(INCLUDE_WINDOW_API "Include the window api(GLFW Wrapper)" ON)
+
+set(DICTU_UI_SOURCES src/dictu-ui.c src/la.c src/skia-wrapper.cc third-party/lodepng/lodepng.c)
+
+if(INCLUDE_WINDOW_API)
+ list(APPEND DICTU_UI_SOURCES
+  third-party/glad/glad.c)
+endif()
+
+add_library(dictu-ui SHARED ${DICTU_UI_SOURCES})
 
 target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/dictu/")
-target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/glad/include/")
-target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/glfw/include")
 target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/lodepng")
 target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia")
 
-target_link_libraries(dictu-ui PUBLIC glfw)
+if(INCLUDE_WINDOW_API)
+  target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/glad/include/")
+  target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/glfw/include")
+  add_subdirectory(third-party/glfw)
+  add_definitions(-DDICTU_UI_WINDOW_API)
+  target_link_libraries(dictu-ui PUBLIC glfw)
+endif()
+
+
 if(APPLE)
-    target_link_libraries(dictu-ui PUBLIC "-framework CoreText -framework CoreGraphics -framework CoreFoundation")
+    target_link_libraries(dictu-ui PUBLIC "-framework Cocoa")
 endif()
 if(WIN32)
     target_link_libraries(dictu-ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/skia.dll.lib")
 else()
-target_link_libraries(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/libskia.a")
+target_link_libraries(dictu-ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/libskia.a")
 endif()
 
 
