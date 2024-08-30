@@ -1,0 +1,24 @@
+from "../mod.du" import mod, toWindow, waitWindows;
+
+def loadPng(path) {
+  with(path, "rb") {
+    return mod.decodePng(file.read());
+  }
+}
+
+const pfp = loadPng("");
+const banner = loadPng("");
+const canvas = mod.skiaSurface(1000, 900);
+
+const pfpScale = 300 / pfp.height;
+print(pfpScale);
+const pfpWidth = pfp.width * pfpScale;
+
+const bannerScale = 1000 / banner.width;
+print(bannerScale);
+const bannerHeight = banner.height * bannerScale;
+
+canvas.drawBuffer(pfp.data, pfp.width, pfp.height, 0,0, pfpWidth, 300);
+canvas.drawBuffer(banner.data, banner.width, banner.height, 0, 300 * (1 / bannerScale), 1000, bannerHeight);
+
+waitWindows([toWindow("merge", canvas)]);

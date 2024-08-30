@@ -20,7 +20,7 @@ int dictu_ffi_init(DictuVM *vm, Table *method_table) {
   defineNative(vm, method_table, "decodePng", dictuUIDecodePng);
   defineNative(vm, method_table, "encodePng", dictuUIEncodePng);
   defineNative(vm, method_table, "skiaSurface", dictuUISkiaSurface);
-  #ifdef DICTU_UI_WINDOW_API
+#ifdef DICTU_UI_WINDOW_API
   defineNative(vm, method_table, "createWindow", dictuUICreateInstance);
   // defineNative(vm, method_table, "objectId", dictu_mongo_object_id);
   glfwInit();
@@ -32,7 +32,7 @@ int dictu_ffi_init(DictuVM *vm, Table *method_table) {
   g_list.head = NULL;
   g_list.tail = NULL;
   loaded_glad = false;
-  #endif
+#endif
   return 0;
 }
 
@@ -160,6 +160,20 @@ static Value dictuUISkiaSurfaceRender(DictuVM *vm, int argCount, Value *args) {
   free(data);
   return v;
 }
+static Value dictuUISkiaSurfaceDrawBuffer(DictuVM *vm, int argCount,
+                                          Value *args) {
+  if (argCount < 7)
+    return NIL_VAL;
+  DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
+  ObjString *buffer = AS_STRING(args[1]);
+  int type = 0;
+  if (argCount == 8)
+    type = AS_NUMBER(args[8]);
+  drawBuffer(instance, buffer->chars, AS_NUMBER(args[2]), AS_NUMBER(args[3]),
+             AS_NUMBER(args[4]), AS_NUMBER(args[5]), AS_NUMBER(args[6]),
+             AS_NUMBER(args[7]), type);
+  return NIL_VAL;
+}
 static Value dictuUISkiaSurfaceClearColor(DictuVM *vm, int argCount,
                                           Value *args) {
   if (argCount != 1)
@@ -245,6 +259,7 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args) {
   defineNative(vm, &abstract->values, "drawPathStroke",
                dictuUISkiaSurfaceDrawPathStroke);
   defineNative(vm, &abstract->values, "createPath", dictuUISkiaSurfaceGetPath);
+  defineNative(vm, &abstract->values, "drawBuffer", dictuUISkiaSurfaceDrawBuffer);
 
   DictuSkiaInstance *instance =
       create_ds_instance(AS_NUMBER(args[0]), AS_NUMBER(args[1]));
@@ -283,7 +298,8 @@ static Value dictuUIEncodePng(DictuVM *vm, int argCount, Value *args) {
     ret = lodepng_encode_memory(&out, &out_size, copy, width, height, type, 8);
     free(copy);
   } else {
-    ret = lodepng_encode_memory(&out, &out_size, data->chars, width, height, type, 8);
+    ret = lodepng_encode_memory(&out, &out_size, data->chars, width, height,
+                                type, 8);
   }
   if (ret != 0) {
     return NIL_VAL;
@@ -296,8 +312,7 @@ static Value dictuUIDecodePng(DictuVM *vm, int argCount, Value *args) {
   if (argCount != 1 || !IS_STRING(args[0]))
     return NIL_VAL;
   ObjString *str = AS_STRING(args[0]);
-  ObjAbstract *abstract =
-      newAbstract(vm, freeDictuPng, DictuPngToString);
+  ObjAbstract *abstract = newAbstract(vm, freeDictuPng, DictuPngToString);
   push(vm, OBJ_VAL(abstract));
   uint32_t w, h;
   uint8_t *data;

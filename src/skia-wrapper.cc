@@ -14,6 +14,10 @@
 #include "include/core/SkBitmap.h"
 #include "include/core/SkTypeface.h"
 #include "include/private/base/SkPoint_impl.h"
+#include <include/core/SkData.h>
+#include <include/core/SkBitmap.h>
+#include <include/core/SkMatrix.h>
+
 #include "la.h"
 #include <include/core/SkFontMgr.h>
 #ifdef __APPLE__
@@ -236,6 +240,21 @@ void drawPathStroke(DictuSkiaInstance *instance, void *in, int32_t strokeWidth,
                                 color.y * (float)255, color.z * (float)255));
   paint.setStrokeWidth(strokeWidth);
   canvas->drawPath(*p, paint);
+}
+void drawBuffer(DictuSkiaInstance *instance, uint8_t* data, int32_t data_width, int32_t data_height, int32_t x, int32_t y, int32_t target_width, int32_t target_height, int color_type) {
+   SkCanvas *canvas =
+      reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
+    SkImageInfo imageInfo = SkImageInfo::MakeN32Premul(data_width, data_height);
+      SkBitmap bitmap;
+    bitmap.installPixels(imageInfo, (void*)data, data_width * (color_type ==1 ? 3 : 4));   
+    sk_sp<SkImage> image = SkImages::RasterFromBitmap(bitmap);
+
+    SkMatrix matrix;
+    matrix.setScale((float)target_width / data_width, (float)target_height / data_height);
+    canvas->setMatrix(matrix);
+    canvas->drawImage(image, x, y);
+    canvas->resetMatrix();
+  
 }
 void clear(DictuSkiaInstance *instance, Vec4f color) {
   SkCanvas *canvas =

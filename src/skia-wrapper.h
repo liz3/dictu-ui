@@ -31,6 +31,7 @@ void drawRectOutline(DictuSkiaInstance *instance, int32_t startX,
 
 void drawText(DictuSkiaInstance *instance, int32_t startX, int32_t startY,
               const char *text, int32_t font_size, Vec4f color);
+void drawBuffer(DictuSkiaInstance *instance, uint8_t* data, int32_t data_width, int32_t data_height, int32_t x, int32_t y, int32_t target_width, int32_t target_height, int color_type);
 void *renderOutput(DictuSkiaInstance *instance);
 void clear(DictuSkiaInstance *instance, Vec4f color);
 void* getPath();
