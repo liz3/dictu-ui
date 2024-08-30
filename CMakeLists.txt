@@ -38,4 +38,6 @@ else()
 target_link_libraries(dictu-ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/libskia.a")
 endif()
 
-
+if(UNIX AND NOT APPLE)
+ target_link_libraries(dictu-ui PUBLIC "-lfontconfig")
+endif()

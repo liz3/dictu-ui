@@ -265,6 +265,7 @@ static Value dictuUIEncodePng(DictuVM *vm, int argCount, Value *args) {
   uint32_t height = AS_NUMBER(args[2]);
   uint8_t *out;
   size_t out_size;
+  int ret;
   LodePNGColorType type = LCT_RGBA;
   if (argCount == 4 && IS_NUMBER(args[3])) {
     int input_format = AS_NUMBER(args[3]);
@@ -279,10 +280,13 @@ static Value dictuUIEncodePng(DictuVM *vm, int argCount, Value *args) {
     } else if (input_format == 1) {
       type = LCT_RGB;
     }
-    lodepng_encode_memory(&out, &out_size, copy, width, height, type, 8);
+    ret = lodepng_encode_memory(&out, &out_size, copy, width, height, type, 8);
     free(copy);
   } else {
-    lodepng_encode_memory(&out, &out_size, data->chars, width, height, type, 8);
+    ret = lodepng_encode_memory(&out, &out_size, data->chars, width, height, type, 8);
+  }
+  if (ret != 0) {
+    return NIL_VAL;
   }
   Value outv = OBJ_VAL(copyString(vm, out, out_size));
   free(out);
