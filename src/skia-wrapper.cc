@@ -16,8 +16,12 @@
 #include "include/private/base/SkPoint_impl.h"
 #include "la.h"
 #include <include/core/SkFontMgr.h>
+#ifdef __APPLE__
 #include <include/ports/SkFontMgr_mac_ct.h>
-#include <include/ports/SkFontMgr_directory.h>
+#endif
+#ifdef _WIN32
+#include <include/ports/SkTypeface_win.h>
+#endif
 
 DictuSkiaInstance *create_ds_instance(uint32_t width, uint32_t height) {
   DictuSkiaInstance *instance =
@@ -114,7 +118,13 @@ void drawRectOutline(DictuSkiaInstance *instance, int32_t x, int32_t y,
 }
 void drawText(DictuSkiaInstance *instance, int32_t x, int32_t y,
               const char *text, int32_t font_size, Vec4f color) {
+    #ifdef __APPLE__
   drawTextWithFont(instance, x, y, text, "Helvetica", font_size, color);
+  #endif
+  #ifdef _WIN32
+ drawTextWithFont(instance, x, y, text, "Arial", font_size, color);
+  #endif
+  
 }
 void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
               const char *text, const char* fontName, int32_t font_size, Vec4f color) {
@@ -125,7 +135,12 @@ void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
                                 color.y * (float)255, color.z * (float)255));
 
   paint.setAntiAlias(true);
+  #ifdef __APPLE__
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_CoreText(nullptr);
+  #endif
+  #ifdef _WIN32
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
+  #endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
   SkFont font;
@@ -147,7 +162,12 @@ float textWidthWithFont(DictuSkiaInstance *instance,
   
 
   paint.setAntiAlias(true);
+  #ifdef __APPLE__
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_CoreText(nullptr);
+  #endif
+  #ifdef _WIN32
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
+  #endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
   SkFont font;

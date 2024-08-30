@@ -1,7 +1,7 @@
 import Random;
 from "../mod.du" import plot, graph, toWindow, waitWindows, getColor;
 
-const p = plot(800, 600, [[0.6, "A"], [1, "B"], [0.3, "C"]], {"color": getColor(0, 50, 200)});
+const p = plot(800, 600, [[0.6, "A"], [1, "B"], [0.3, "C"]], {"color": getColor(0, 200, 50)});
 const window = toWindow("Hello", p);
 
 var graphs = [];
@@ -12,6 +12,6 @@ for(var i = 0; i < 4; i += 1) {
   }
   graphs.push([g, "{}".format(i)]);
 }
-const g = graph("", 800, 400, graphs, {"markings": [[1], [0.5], [0]]});
+const g = graph("", 800, 400, graphs, {"markings": [[1, "1"], [0.5, "0.5"], [0, "0"]]});
 const window2 = toWindow("Graph", g);
 waitWindows([window, window2]);

@@ -14,10 +14,14 @@ target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-p
 target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/lodepng")
 target_include_directories(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia")
 
-target_link_libraries(dictu-ui PRIVATE glfw)
+target_link_libraries(dictu-ui PUBLIC glfw)
 if(APPLE)
     target_link_libraries(dictu-ui PUBLIC "-framework CoreText -framework CoreGraphics -framework CoreFoundation")
 endif()
-target_link_libraries(dictu-ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/libskia.a")
+if(WIN32)
+    target_link_libraries(dictu-ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/skia.dll.lib")
+else()
+target_link_libraries(dictu-ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/skia/out/Release/libskia.a")
+endif()
 
 

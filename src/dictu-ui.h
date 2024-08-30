@@ -100,7 +100,14 @@ typedef struct {
     int width;
     int height;
 } SizeEvent;
-enum EventType { CHAR, KEY, WINDOW_FOCUS, WINDOW_RESIZE};
+typedef struct {
+    double x;
+    double y;
+    bool is_ctrl;
+    bool is_alt;
+    bool is_meta;
+} MousePosEvent;
+enum EventType { CHAR, KEY, WINDOW_FOCUS, WINDOW_RESIZE, MOUSE_BUTTON, MOUSE_POS};
 typedef struct {
     enum EventType type;
     void* data;

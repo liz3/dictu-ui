@@ -2,7 +2,20 @@ import FFI;
 import Random;
 import Path;
 import Math;
-const mod = FFI.load(Path.join([Path.dirname(__file__), "build", "libdictu-ui.dylib"]));
+import System;
+def loadMod() {
+  if (System.platform == "windows"){
+    const releaseDir = Path.join([Path.dirname(__file__), "build", "Release"]);
+    const currentPwd = System.getCWD().unwrap();
+    System.setCWD(releaseDir).unwrap();
+    const m = FFI.load("dictu-ui.dll");
+    System.setCWD(currentPwd).unwrap();
+    return m;
+  }
+  return FFI.load(Path.join([Path.dirname(__file__), "build", "libdictu-ui.dylib"]));
+}
+
+const mod = loadMod();
 def getColor(r,g,b,a=255) {
   return {"r": r, "g": g, "b": b, "a": a};
 }
@@ -18,10 +31,12 @@ def waitWindows(windows) {
   while {
     var remove = [];
     local.forEach(def(window) => {
-      if (window.shouldClose())
+      if (window.shouldClose()) {
         remove.push(window);
-      else
+      }else{
         window.render();
+        window.pollEvents();
+      }
     });
     remove.forEach(def(w) => {
      local.remove(w);

@@ -364,6 +364,7 @@ static Value dictuUIClose(DictuVM *vm, int argCount, Value *args) {
   if (AS_ABSTRACT(args[0])->data == NULL)
     return BOOL_VAL(false);
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
+  glfwMakeContextCurrent(instance->window);
   list_remove(&g_list, (ListEntry *)instance->list_entry);
   instance->list_entry = NULL;
   glfwDestroyWindow(instance->window);
@@ -457,6 +458,43 @@ void window_focus_callback(GLFWwindow *window, int focused) {
   Event event = {WINDOW_FOCUS, v};
   append_event(event, instance);
 }
+
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+                           int mods) {
+  ListEntry *entry = list_find_window(&g_list, window);
+  if (entry == NULL)
+    return;
+
+  UiInstance *instance = entry->instance;
+  KeyEvent *ev_data = malloc(sizeof(KeyEvent));
+  ev_data->is_ctrl = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                     glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
+  ev_data->is_alt = glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
+  ev_data->is_meta = glfwGetKey(window, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS;
+  ev_data->key = button;
+  ev_data->mods = mods;
+  ev_data->action = action;
+  Event event = {MOUSE_BUTTON, ev_data};
+  append_event(event, instance);
+
+}
+void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
+  ListEntry *entry = list_find_window(&g_list, window);
+  if (entry == NULL)
+    return;
+
+  UiInstance *instance = entry->instance;
+  MousePosEvent *ev_data = malloc(sizeof(MousePosEvent));
+  ev_data->is_ctrl = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                     glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
+  ev_data->is_alt = glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
+  ev_data->is_meta = glfwGetKey(window, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS;
+  ev_data->x = xpos;
+  ev_data->y = ypos;
+
+  Event event = {MOUSE_POS, ev_data};
+  append_event(event, instance);
+}
 static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
   ObjList *list = newList(vm);
@@ -493,7 +531,37 @@ static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
               NUMBER_VAL(data->action));
       writeValueArray(vm, &list->values, OBJ_VAL(d));
       free(data);
-    } else if (ev.type == WINDOW_FOCUS) {
+    } else if (ev.type == MOUSE_BUTTON) {
+      KeyEvent *data = (KeyEvent *)ev.data;
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "type", 4)),
+              OBJ_VAL(copyString(vm, "mouse_button", 12)));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "ctrl", 4)),
+              BOOL_VAL(data->is_ctrl));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "alt", 3)), BOOL_VAL(data->is_alt));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "meta", 4)),
+              BOOL_VAL(data->is_meta));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "button", 6)), NUMBER_VAL(data->key));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "mods", 4)),
+              NUMBER_VAL(data->mods));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "action", 6)),
+              NUMBER_VAL(data->action));
+      writeValueArray(vm, &list->values, OBJ_VAL(d));
+      free(data);
+    } else if (ev.type == MOUSE_POS) {
+      MousePosEvent *data = (MousePosEvent *)ev.data;
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "type", 4)),
+              OBJ_VAL(copyString(vm, "mouse_position", 14)));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "ctrl", 4)),
+              BOOL_VAL(data->is_ctrl));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "alt", 3)), BOOL_VAL(data->is_alt));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "meta", 4)),
+              BOOL_VAL(data->is_meta));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "x", 1)), NUMBER_VAL(data->x));
+      dictSet(vm, d, OBJ_VAL(copyString(vm, "y", 1)),
+              NUMBER_VAL(data->y));
+      writeValueArray(vm, &list->values, OBJ_VAL(d));
+      free(data);
+    }  else if (ev.type == WINDOW_FOCUS) {
       bool *data = (bool *)ev.data;
       dictSet(vm, d, OBJ_VAL(copyString(vm, "type", 4)),
               OBJ_VAL(copyString(vm, "window_focus", 12)));
@@ -520,6 +588,12 @@ static Value dictuUIPollEvents(DictuVM *vm, int argCount, Value *args) {
   instance->event_length = 0;
   return OBJ_VAL(list);
 }
+static Value dictuUIKeyState(DictuVM *vm, int argCount, Value *args) {
+  if(argCount < 1 || !IS_NUMBER(args[1]))
+    return NIL_VAL;
+  UiInstance *instance = AS_UI_INSTANCE(args[0]);
+  return NUMBER_VAL(glfwGetKey(instance->window, AS_NUMBER(args[1])));
+}
 static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   if (argCount < 3 || !IS_STRING(args[0]) || !IS_NUMBER(args[1]) ||
       !IS_NUMBER(args[2]))
@@ -532,6 +606,7 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
       newAbstract(vm, freeDictuIUInstance, DictuIUInstanceToString);
   push(vm, OBJ_VAL(abstract));
   defineNative(vm, &abstract->values, "close", dictuUIClose);
+  defineNative(vm, &abstract->values, "keyState", dictuUIKeyState);
   defineNative(vm, &abstract->values, "shouldClose", dictuUIShouldClose);
   defineNative(vm, &abstract->values, "copyBuffer", dictuUICopyBuffer);
   defineNative(vm, &abstract->values, "setClearColor", dictuUISetClearColor);
@@ -558,7 +633,9 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   glfwSetFramebufferSizeCallback(instance->window, framebuffer_size_callback);
   glfwSetCharCallback(instance->window, character_callback);
   glfwSetKeyCallback(instance->window, key_callback);
+  glfwSetMouseButtonCallback(instance->window, mouse_button_callback);
   glfwSetWindowFocusCallback(instance->window, window_focus_callback);
+  glfwSetCursorPosCallback(instance->window, cursor_position_callback);
 
   float xscale, yscale;
   glfwGetWindowContentScale(instance->window, &xscale, &yscale);
@@ -747,7 +824,11 @@ Vec4f colorToVec(DictuVM* vm, Value v) {
     if(strcmp(key->chars, "a") == 0)
       a = value;
   }
-  return vec4f((float)r / f, (float)g / f, (float)b / f, (float)a / f);
+  #ifdef _WIN32
+  return vec4f((float)b / f, (float)g / f, (float)r / f, (float)a / f);
+  #else
+    return vec4f((float)r / f, (float)g / f, (float)b / f, (float)a / f);
+#endif
 }
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   ListEntry *entry = list_find_window(&g_list, window);
