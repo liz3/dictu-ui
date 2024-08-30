@@ -11,7 +11,7 @@ Clone the Repository: `git clone --recurse-submodules https://github.com/liz3/di
 * On windows: visual studio(MSBuild/msvc).
 * On mac and linux: a recent version of LLVM.
 
-**Note: ** You need a dictu build of my fork(branch develop) because it contains patches for the FFI api, not yet merged upstream.
+**Note:** You need a dictu build of my fork(branch develop) because it contains patches for the FFI api, not yet merged upstream.
 ## Building Skia
 Skia has no Cmake support so we need to build it seperatedly.
 `cd third-party/skia`
