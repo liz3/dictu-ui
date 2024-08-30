@@ -22,6 +22,9 @@
 #ifdef _WIN32
 #include <include/ports/SkTypeface_win.h>
 #endif
+#ifdef __linux__
+#include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 
 DictuSkiaInstance *create_ds_instance(uint32_t width, uint32_t height) {
   DictuSkiaInstance *instance =
@@ -37,12 +40,12 @@ DictuSkiaInstance *create_ds_instance(uint32_t width, uint32_t height) {
   return instance;
 }
 void disposeInstance(DictuSkiaInstance *instance) {
-     SkCanvas *canvas =
+  SkCanvas *canvas =
       reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
-    SkSurface *surface =
+  SkSurface *surface =
       reinterpret_cast<SkSurface *>(instance->surface_instance);
-    delete surface;
-    free(instance);
+  delete surface;
+  free(instance);
 }
 
 void drawLine(DictuSkiaInstance *instance, int32_t startX, int32_t startY,
@@ -118,16 +121,15 @@ void drawRectOutline(DictuSkiaInstance *instance, int32_t x, int32_t y,
 }
 void drawText(DictuSkiaInstance *instance, int32_t x, int32_t y,
               const char *text, int32_t font_size, Vec4f color) {
-    #ifdef __APPLE__
+#ifdef __APPLE__
   drawTextWithFont(instance, x, y, text, "Helvetica", font_size, color);
-  #endif
-  #ifdef _WIN32
- drawTextWithFont(instance, x, y, text, "Arial", font_size, color);
-  #endif
-  
+#else
+  drawTextWithFont(instance, x, y, text, "Arial", font_size, color);
+#endif
 }
 void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
-              const char *text, const char* fontName, int32_t font_size, Vec4f color) {
+                      const char *text, const char *fontName, int32_t font_size,
+                      Vec4f color) {
   SkCanvas *canvas =
       reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
   SkPaint paint;
@@ -135,12 +137,15 @@ void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
                                 color.y * (float)255, color.z * (float)255));
 
   paint.setAntiAlias(true);
-  #ifdef __APPLE__
+#ifdef __APPLE__
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_CoreText(nullptr);
-  #endif
-  #ifdef _WIN32
+#endif
+#ifdef _WIN32
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
-  #endif
+#endif
+#ifdef __linux__
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig();
+#endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
   SkFont font;
@@ -150,24 +155,30 @@ void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
   canvas->drawSimpleText(text, strlen(text), SkTextEncoding::kUTF8, x, y, font,
                          paint);
 }
-float textWidth(DictuSkiaInstance *instance,
-              const char *text, int32_t font_size) {
-  return textWidthWithFont(instance,  text, "Helvetica", font_size);
+float textWidth(DictuSkiaInstance *instance, const char *text,
+                int32_t font_size) {
+#ifdef __APPLE__
+  return textWidthWithFont(instance, text, "Helvetica", font_size);
+#else
+  return textWidthWithFont(instance, text, "Arial", font_size);
+#endif
 }
-float textWidthWithFont(DictuSkiaInstance *instance,
-              const char *text, const char* fontName, int32_t font_size) {
+float textWidthWithFont(DictuSkiaInstance *instance, const char *text,
+                        const char *fontName, int32_t font_size) {
   SkCanvas *canvas =
       reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
   SkPaint paint;
-  
 
   paint.setAntiAlias(true);
-  #ifdef __APPLE__
+#ifdef __APPLE__
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_CoreText(nullptr);
-  #endif
-  #ifdef _WIN32
+#endif
+#ifdef _WIN32
   sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_GDI();
-  #endif
+#endif
+#ifdef __linux__
+  sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_FontConfig();
+#endif
   sk_sp<SkTypeface> fTypeface =
       fontMgr->legacyMakeTypeface(fontName, SkFontStyle::Normal());
   SkFont font;
@@ -186,16 +197,16 @@ void deletePath(void *in) {
   SkPath *p = reinterpret_cast<SkPath *>(in);
   delete p;
 }
-void pathArcTo(void* in, int32_t x, int32_t y,int32_t w,int32_t l, float start, float sweep, bool force) {
+void pathArcTo(void *in, int32_t x, int32_t y, int32_t w, int32_t l,
+               float start, float sweep, bool force) {
 
   SkPath *p = reinterpret_cast<SkPath *>(in);
-  SkRect rect = SkRect::MakeLTRB(x,y,w,l);
+  SkRect rect = SkRect::MakeLTRB(x, y, w, l);
   p->arcTo(rect, start, sweep, force);
 }
-void pathLineTo(void* in, int32_t x, int32_t y) {
+void pathLineTo(void *in, int32_t x, int32_t y) {
   SkPath *p = reinterpret_cast<SkPath *>(in);
   p->lineTo(SkPoint::Make(x, y));
-
 }
 void pathMoveTo(void *in, int32_t x, int32_t y) {
   SkPath *p = reinterpret_cast<SkPath *>(in);
@@ -212,7 +223,8 @@ void drawPath(DictuSkiaInstance *instance, void *in, Vec4f color) {
                                 color.y * (float)255, color.z * (float)255));
   canvas->drawPath(*p, paint);
 }
-void drawPathStroke(DictuSkiaInstance *instance, void *in, int32_t strokeWidth, Vec4f color) {
+void drawPathStroke(DictuSkiaInstance *instance, void *in, int32_t strokeWidth,
+                    Vec4f color) {
   SkCanvas *canvas =
       reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
   SkPath *p = reinterpret_cast<SkPath *>(in);

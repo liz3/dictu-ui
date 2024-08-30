@@ -30,13 +30,25 @@ Build:
 ```
 third_party\ninja\ninja.exe -C out\Release
 ```
-### MacOS/Linux
+### MacOS
 Generate the Build files
 ```
 bin/gn gen out/Release --args='is_official_build=true skia_enable_tools=false skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false extra_cflags_cc=["-frtti"] skia_use_system_zlib=false'
 ```
 If you are on Apple sillicon append `target_cpu="arm64"` to `--args=`
 
+Build:
+```
+third_party/ninja/ninja -C out/Release
+```
+
+### Linux
+
+Generate the Build files
+```
+bin/gn gen out/Release --args='is_official_build=true skia_enable_tools=false skia_use_system_libjpeg_turbo=false skia_use_system_libwebp=false skia_use_system_libpng=false skia_use_system_icu=false skia_use_system_harfbuzz=false extra_cflags_cc=["-frtti"] skia_use_system_zlib=false skia_use_freetype=true skia_use_system_freetype2=false skia_enable_ganesh=false'
+```
+**Note you will need fontconfig installed!**
 Build:
 ```
 third_party/ninja/ninja -C out/Release
