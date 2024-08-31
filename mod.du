@@ -73,7 +73,7 @@ def pie(name, width_in, height_in, entries) {
       const nameRadius = width / 3;
       const start_x = centerX + nameRadius * Math.cos(nameAngle * Math.pi / 180);
       const start_y = centerY + nameRadius * Math.sin(nameAngle * Math.pi / 180);
-      canvas.drawText(start_x - canvas.measureText(entry[1], 14) / 2, start_y, entry[1], 14, getColor(0,0,0));
+      canvas.drawText(start_x - canvas.measureText(entry[1], 14) / 2, start_y, entry[1], 16, getColor(0,0,0));
     }
     startAngle = startAngle + angle;
   });
