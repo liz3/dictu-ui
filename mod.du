@@ -51,11 +51,11 @@ def getRandomColor() {
   return getColor(Random.range(0, 255), Random.range(0, 255), Random.range(0, 255));
 }
 def pie(name, width_in, height_in, entries) {
-  const canvas = mod.skiaSurface(width, height);
+  const canvas = mod.skiaSurface(width_in, height_in);
   canvas.clear(getColor(255,255,255));
   var startAngle = 0.0;
-  const left = 20;
-  const top = 20;
+  const left = width_in * 0.05;
+  const top = height_in * 0.05;
   const width = width_in - (left);
   const height = height_in - (top);
   const centerX = width / 2;
@@ -66,12 +66,14 @@ def pie(name, width_in, height_in, entries) {
     var angle = 360.0 * value;
     const path = canvas.createPath();
     path.moveTo(canvas.width / 2, canvas.height / 2);
+    path.arcTo(left, top, width, height, startAngle, angle);
     canvas.drawPath(path, getColor(Random.range(0, 255), Random.range(0, 255), Random.range(0,255)));
     if(entry.len() > 1) {
-      const nameAngle = startAngle + (value / 2 / 1) * 2 * Math.pi;
-      const start_x = centerX + radius * Math.cos(nameAngle);
-      const start_y = centerY + radius * Math.sin(nameAngle);
-      canvas.drawText(start_x, start_y, entry[1], 14, getColor(0,0,0));
+      const nameAngle = startAngle + angle / 2;
+      const nameRadius = width / 3;
+      const start_x = centerX + nameRadius * Math.cos(nameAngle * Math.pi / 180);
+      const start_y = centerY + nameRadius * Math.sin(nameAngle * Math.pi / 180);
+      canvas.drawText(start_x - canvas.measureText(entry[1], 14) / 2, start_y, entry[1], 14, getColor(0,0,0));
     }
     startAngle = startAngle + angle;
   });

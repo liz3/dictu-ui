@@ -1,22 +1,24 @@
 #include "skia-wrapper.h"
-#include <cstdint>
-#include <stdlib.h>
+#include "include/core/SkAlphaType.h"
+#include "include/core/SkBitmap.h"
+#include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
+#include "include/core/SkColorType.h"
 #include "include/core/SkFont.h"
 #include "include/core/SkImage.h"
-#include "include/core/SkPath.h"
-#include "include/core/SkSurface.h"
 #include "include/core/SkPaint.h"
-#include "include/core/SkCanvas.h"
-#include "include/core/SkRRect.h"
+#include "include/core/SkPath.h"
 #include "include/core/SkPathEffect.h"
+#include "include/core/SkRRect.h"
+#include "include/core/SkSurface.h"
 #include "include/core/SkTextBlob.h"
-#include "include/core/SkBitmap.h"
 #include "include/core/SkTypeface.h"
 #include "include/private/base/SkPoint_impl.h"
-#include <include/core/SkData.h>
+#include <cstdint>
 #include <include/core/SkBitmap.h>
+#include <include/core/SkData.h>
 #include <include/core/SkMatrix.h>
+#include <stdlib.h>
 
 #include "la.h"
 #include <include/core/SkFontMgr.h>
@@ -241,20 +243,29 @@ void drawPathStroke(DictuSkiaInstance *instance, void *in, int32_t strokeWidth,
   paint.setStrokeWidth(strokeWidth);
   canvas->drawPath(*p, paint);
 }
-void drawBuffer(DictuSkiaInstance *instance, uint8_t* data, int32_t data_width, int32_t data_height, int32_t x, int32_t y, int32_t target_width, int32_t target_height, int color_type) {
-   SkCanvas *canvas =
+void drawBuffer(DictuSkiaInstance *instance, uint8_t *data, int32_t data_width,
+                int32_t data_height, int32_t x, int32_t y, int32_t target_width,
+                int32_t target_height, int color_type) {
+  SkCanvas *canvas =
       reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
-    SkImageInfo imageInfo = SkImageInfo::MakeN32Premul(data_width, data_height);
-      SkBitmap bitmap;
-    bitmap.installPixels(imageInfo, (void*)data, data_width * (color_type ==1 ? 3 : 4));   
-    sk_sp<SkImage> image = SkImages::RasterFromBitmap(bitmap);
+  SkImageInfo imageInfo = SkImageInfo::Make(
+      data_width, data_height,
+      color_type == 1
+          ? kRGB_888x_SkColorType
+          : (color_type == 2 ? kBGRA_8888_SkColorType : kRGBA_8888_SkColorType),
+      kPremul_SkAlphaType);
+  SkBitmap bitmap;
 
-    SkMatrix matrix;
-    matrix.setScale((float)target_width / data_width, (float)target_height / data_height);
-    canvas->setMatrix(matrix);
-    canvas->drawImage(image, x, y);
-    canvas->resetMatrix();
-  
+  bitmap.installPixels(imageInfo, (void *)data,
+                       data_width * (color_type == 1 ? 3 : 4));
+  sk_sp<SkImage> image = SkImages::RasterFromBitmap(bitmap);
+
+  SkMatrix matrix;
+  matrix.setScale((float)target_width / data_width,
+                  (float)target_height / data_height);
+  canvas->setMatrix(matrix);
+  canvas->drawImage(image, x, y);
+  canvas->resetMatrix();
 }
 void clear(DictuSkiaInstance *instance, Vec4f color) {
   SkCanvas *canvas =
