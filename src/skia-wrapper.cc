@@ -243,6 +243,18 @@ void drawPathStroke(DictuSkiaInstance *instance, void *in, int32_t strokeWidth,
   paint.setStrokeWidth(strokeWidth);
   canvas->drawPath(*p, paint);
 }
+void rotate(DictuSkiaInstance* instance, float angle) {
+    SkCanvas *canvas =
+      reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
+    canvas->rotate(angle);
+
+}
+void translate(DictuSkiaInstance* instance, float x, float y) {
+    SkCanvas *canvas =
+      reinterpret_cast<SkCanvas *>(instance->skia_raster_instance);
+    canvas->translate(x, y);
+
+}
 void drawBuffer(DictuSkiaInstance *instance, uint8_t *data, int32_t data_width,
                 int32_t data_height, int32_t x, int32_t y, int32_t target_width,
                 int32_t target_height, int color_type) {

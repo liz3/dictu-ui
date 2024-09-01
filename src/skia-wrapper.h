@@ -41,7 +41,8 @@ void pathMoveTo(void* in, int32_t x, int32_t y);
 void pathLineTo(void* in, int32_t x, int32_t y);
 void drawPath(DictuSkiaInstance* instance, void* in, Vec4f color);
 void drawPathStroke(DictuSkiaInstance* instance, void* in, int32_t strokeWidth, Vec4f color);
-
+void rotate(DictuSkiaInstance* instance, float angle);
+void translate(DictuSkiaInstance* instance, float x, float y);
 void drawTextWithFont(DictuSkiaInstance *instance, int32_t x, int32_t y,
               const char *text, const char* fontName, int32_t font_size, Vec4f color);
 

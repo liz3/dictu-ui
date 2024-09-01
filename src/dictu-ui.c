@@ -222,6 +222,22 @@ static Value dictuUISkiaSurfaceDrawPathStroke(DictuVM *vm, int argCount,
                  colorToVec(vm, args[3]));
   return NIL_VAL;
 }
+static Value dictuUISkiaSurfaceRotate(DictuVM *vm, int argCount,
+                                              Value *args){
+  if(argCount != 1)
+    return NIL_VAL;
+  DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
+  rotate(instance, AS_NUMBER(args[1]));
+  return NIL_VAL;
+}
+static Value dictuUISkiaSurfaceTranslate(DictuVM *vm, int argCount,
+                                              Value *args){
+  if(argCount != 2)
+    return NIL_VAL;
+  DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
+  translate(instance, AS_NUMBER(args[1]), AS_NUMBER(args[2]));
+  return NIL_VAL;
+}
 static Value dictuUISkiaSurfaceGetPath(DictuVM *vm, int argCount, Value *args) {
 
   DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
@@ -260,6 +276,8 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args) {
                dictuUISkiaSurfaceDrawPathStroke);
   defineNative(vm, &abstract->values, "createPath", dictuUISkiaSurfaceGetPath);
   defineNative(vm, &abstract->values, "drawBuffer", dictuUISkiaSurfaceDrawBuffer);
+  defineNative(vm, &abstract->values, "rotate", dictuUISkiaSurfaceRotate);
+  defineNative(vm, &abstract->values, "translate", dictuUISkiaSurfaceTranslate);
 
   DictuSkiaInstance *instance =
       create_ds_instance(AS_NUMBER(args[0]), AS_NUMBER(args[1]));

@@ -19,6 +19,6 @@ print(bannerScale);
 const bannerHeight = banner.height * bannerScale;
 
 canvas.drawBuffer(pfp.data, pfp.width, pfp.height, 0,0, pfpWidth, 300);
-canvas.drawBuffer(banner.data, banner.width, banner.height, 0, 300 * (1 / bannerScale), 1000, bannerHeight);
+canvas.drawBuffer(banner.data, banner.width, banner.height, 0, 300 / bannerScale, 1000, bannerHeight);
 
 waitWindows([toWindow("merge", canvas)]);
