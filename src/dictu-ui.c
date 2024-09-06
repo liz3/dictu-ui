@@ -434,6 +434,11 @@ static Value dictuUIShouldClose(DictuVM *vm, int argCount, Value *args) {
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
   return BOOL_VAL(glfwWindowShouldClose(instance->window));
 }
+static Value dictuUIRequestFocus(DictuVM *vm, int argCount, Value *args) {
+  UiInstance *instance = AS_UI_INSTANCE(args[0]);
+  glfwRequestWindowAttention(instance->window);
+  return NIL_VAL;
+}
 
 static Value dictuUIShowWindow(DictuVM *vm, int argCount, Value *args) {
   if(argCount < 1 || !IS_BOOL(args[1]))
@@ -695,6 +700,7 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   push(vm, OBJ_VAL(abstract));
   defineNative(vm, &abstract->values, "close", dictuUIClose);
   defineNative(vm, &abstract->values, "show", dictuUIShowWindow);
+  defineNative(vm, &abstract->values, "requestFocus", dictuUIRequestFocus);
   defineNative(vm, &abstract->values, "keyState", dictuUIKeyState);
   defineNative(vm, &abstract->values, "shouldClose", dictuUIShouldClose);
   defineNative(vm, &abstract->values, "copyBuffer", dictuUICopyBuffer);
@@ -741,6 +747,9 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
       }
       if (strcmp(key->chars, "transparent") == 0) {
         glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "mouse_passthrough") == 0) {
+        glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, AS_BOOL(v));
       }
     }
   }
