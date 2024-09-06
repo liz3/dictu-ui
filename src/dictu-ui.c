@@ -2,6 +2,10 @@
 #ifdef DICTU_UI_SOURCES
 #include "GLFW/glfw3.h"
 #endif
+
+#ifdef DICTU_UI_MAC_LOCATION
+#include "mac_location_interface.h"
+#endif
 #include "dictu-include.h"
 #include "la.h"
 #include "skia-wrapper.h"
@@ -20,14 +24,14 @@ int dictu_ffi_init(DictuVM *vm, Table *method_table) {
   defineNative(vm, method_table, "decodePng", dictuUIDecodePng);
   defineNative(vm, method_table, "encodePng", dictuUIEncodePng);
   defineNative(vm, method_table, "skiaSurface", dictuUISkiaSurface);
+#ifdef DICTU_UI_MAC_LOCATION
+  defineNative(vm, method_table, "getLocation", dictuUIMacLocation);
+
+#endif
 #ifdef DICTU_UI_WINDOW_API
   defineNative(vm, method_table, "createWindow", dictuUICreateInstance);
   // defineNative(vm, method_table, "objectId", dictu_mongo_object_id);
   glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwSwapInterval(1);
   g_list.size = 0;
   g_list.head = NULL;
   g_list.tail = NULL;
@@ -136,7 +140,7 @@ static Value dictuUISkiaSurfaceMeasureText(DictuVM *vm, int argCount,
   if (argCount == 2) {
     ObjString *str = AS_STRING(args[1]);
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-    return textWidth(instance, str->chars, AS_NUMBER(args[2]));
+    return NUMBER_VAL(textWidth(instance, str->chars, AS_NUMBER(args[2])));
   }
   return NIL_VAL;
 }
@@ -147,8 +151,8 @@ static Value dictuUISkiaSurfaceMeasureTextWithFont(DictuVM *vm, int argCount,
     ObjString *str = AS_STRING(args[1]);
     ObjString *fontstr = AS_STRING(args[2]);
     DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
-    return textWidthWithFont(instance, str->chars, fontstr->chars,
-                             AS_NUMBER(args[3]));
+    return NUMBER_VAL(textWidthWithFont(instance, str->chars, fontstr->chars,
+                             AS_NUMBER(args[3])));
   }
   return NIL_VAL;
 }
@@ -404,28 +408,30 @@ static Value dictuUIRender(DictuVM *vm, int argCount, Value *args) {
   glClearColor((float)clear_color.r / 255, (float)clear_color.g / 255,
                (float)clear_color.b / 255, (float)clear_color.a / 255);
   glClear(GL_COLOR_BUFFER_BIT);
-  Vec2f window_size;
-  Vec2f start_pos = {0, 0};
-  float bufferAspectRatio =
-      (float)instance->render_buffer.w / (float)instance->render_buffer.h;
-  float windowAspectRatio =
-      (float)instance->window_width / (float)instance->window_height;
+  if (instance->render_buffer.buffer_size) {
+    Vec2f window_size;
+    Vec2f start_pos = {0, 0};
+    float bufferAspectRatio =
+        (float)instance->render_buffer.w / (float)instance->render_buffer.h;
+    float windowAspectRatio =
+        (float)instance->window_width / (float)instance->window_height;
 
-  if (bufferAspectRatio > windowAspectRatio) {
-    window_size.x = instance->window_width;
-    window_size.y = instance->window_width / bufferAspectRatio;
-    start_pos.y = (instance->window_height - window_size.y) / 2;
-  } else {
-    window_size.y = instance->window_height;
-    window_size.x = instance->window_height * bufferAspectRatio;
-    start_pos.x = (instance->window_width - window_size.x) / 2;
+    if (bufferAspectRatio > windowAspectRatio) {
+      window_size.x = instance->window_width;
+      window_size.y = instance->window_width / bufferAspectRatio;
+      start_pos.y = (instance->window_height - window_size.y) / 2;
+    } else {
+      window_size.y = instance->window_height;
+      window_size.x = instance->window_height * bufferAspectRatio;
+      start_pos.x = (instance->window_width - window_size.x) / 2;
+    }
+    SimpleShaderEntry entry = {normalize(instance, start_pos), window_size};
+    shader_use(instance->shader);
+    glBindTexture(GL_TEXTURE_2D, instance->render_buffer.texture_id);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(SimpleShaderEntry), &entry);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, 1);
   }
-  SimpleShaderEntry entry = {normalize(instance, start_pos), window_size};
-  shader_use(instance->shader);
-  glBindTexture(GL_TEXTURE_2D, instance->render_buffer.texture_id);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(SimpleShaderEntry), &entry);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, 1);
   glfwSwapBuffers(instance->window);
   return NIL_VAL;
 }
@@ -441,10 +447,10 @@ static Value dictuUIRequestFocus(DictuVM *vm, int argCount, Value *args) {
 }
 
 static Value dictuUIShowWindow(DictuVM *vm, int argCount, Value *args) {
-  if(argCount < 1 || !IS_BOOL(args[1]))
+  if (argCount < 1 || !IS_BOOL(args[1]))
     return NIL_VAL;
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
-  if(AS_BOOL(args[1])) {
+  if (AS_BOOL(args[1])) {
     glfwShowWindow(instance->window);
 
   } else {
@@ -691,6 +697,10 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
       !IS_NUMBER(args[2]))
     return NIL_VAL;
   glfwDefaultWindowHints();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwSwapInterval(1);
   ObjString *window_title = AS_STRING(args[0]);
   uint32_t window_width = AS_NUMBER(args[1]);
   uint32_t window_height = AS_NUMBER(args[2]);
@@ -948,7 +958,21 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   append_event(ev, instance);
 }
 #endif
-
+#ifdef DICTU_UI_MAC_LOCATION
+static Value dictuUIMacLocation(DictuVM *vm, int argCount, Value *args) {
+  Location loc;
+  getLocation(&loc);
+  ObjDict *d = newDict(vm);
+  push(vm, OBJ_VAL(d));
+  dictSet(vm, d, OBJ_VAL(copyString(vm, "res", 3)), BOOL_VAL(loc.was_set));
+  if (loc.was_set) {
+    dictSet(vm, d, OBJ_VAL(copyString(vm, "lat", 3)), NUMBER_VAL(loc.lat));
+    dictSet(vm, d, OBJ_VAL(copyString(vm, "lng", 3)), NUMBER_VAL(loc.lng));
+  }
+  pop(vm);
+  return OBJ_VAL(d);
+}
+#endif
 Vec4f colorToVec(DictuVM *vm, Value v) {
   float f = 255;
   int32_t r, g, b, a;

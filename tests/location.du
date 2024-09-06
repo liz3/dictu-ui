@@ -1,0 +1,111 @@
+import HTTP;
+import JSON;
+import System;
+import Datetime;
+from "../mod.du" import mod,waitWindows, getColor;
+
+const TextColor = getColor(0,0,0);
+
+var state = 0;
+var location = nil;
+var weather_data = nil;
+var count = 0;
+
+const values = [["air_temperature", "Temperature: {} {}"], ["wind_speed", "Wind wind_speed: {} {}"], ["wind_from_direction", "Wind Direction: {} {}"]];
+
+
+const window = mod.createWindow("title", 400, 400);
+const canvas = mod.skiaSurface(400, 400);
+while(not window.shouldClose()) {
+  const data = canvas.render();
+  if(state == 0) {
+    canvas.clear(getColor(255,255,255));
+    canvas.drawText(10, 20, "Loading Location", 22, TextColor);
+  }
+  if(state == 1) {
+    canvas.clear(getColor(255,255,255));
+    canvas.drawText(10, 20, "Loading weather Data", 22, TextColor);
+    canvas.drawText(10, 40, "Lat: {}".format(location["lat"]), 22, TextColor);
+    canvas.drawText(10, 60, "Lng: {}".format(location["lng"]), 22, TextColor);
+  }
+  if (state == 2) {
+    const properties = weather_data["properties"];
+    const ts_entry = properties["timeseries"][count];
+    const units = properties["meta"]["units"];
+    const data = ts_entry["data"]["instant"]["details"];
+    const nextHr = ts_entry["data"]["next_1_hours"]["summary"]["symbol_code"];
+    if(nextHr.contains("night")) {
+        canvas.clear(getColor(27, 29, 92));
+    } else {
+      canvas.clear(getColor(48, 101, 171));
+    }
+    var offset = 20;
+    values.forEach(def(entry) => {
+      canvas.drawText(20, offset, entry[1].format(data[entry[0]], units[entry[0]]), 20, getColor(110, 111, 112));
+      offset += 25;
+    });
+          canvas.drawText(20, offset, "Weather state: {}".format(nextHr), 20, getColor(110, 111, 112));
+
+      const t = Datetime.strftime("%H:%M:%S", System.time());
+    canvas.drawText(10, canvas.height - 15, "{} ({})".format(t, count+1), 14, getColor(110, 111, 112));
+    const pos = "{}/{}".format(location["lat"], location["lng"]);
+    canvas.drawText(canvas.width - (10 + canvas.measureText(pos, 14)), canvas.height - 15, pos, 14, getColor(110, 111, 112));
+  }
+  if(state == 10) {
+    canvas.clear(getColor(255,255,255));
+    canvas.drawText(10, 20, "Failed to load location", 22, TextColor);
+  }
+  if(state == 11) {
+    canvas.clear(getColor(255,255,255));
+    canvas.drawText(10, 20, "Failed to load weather data", 22, TextColor);
+  }
+  if(state == 12) {
+    canvas.clear(getColor(255,255,255));
+    canvas.drawText(10, 20, "Failed to parsed weather data", 22, TextColor);
+  }
+  window.copyBuffer(data, canvas.width, canvas.height, 2);
+  window.render();
+  window.waitEventsTimeout(5);
+  window.pollEvents();
+ 
+  if(state == 0) {
+    location = mod.getLocation();
+    print(location);
+    if(not location["res"]) {
+      location = {"res":true,"lat": 51.5027, "lng": 7.3649};
+    } 
+    state = 1;
+
+    
+  } else if (state == 1) {
+  const res = HTTP.get("https://api.met.no/weatherapi/locationforecast/2.0/complete?lat={}&lon={}".format(location["lat"], location["lng"]), ["User-agent: dictu/{}".format(System.version)]);
+  if(res.success()){
+  const a = res.unwrap();
+    if(a.statusCode == 200) {
+    const d = a.content;
+    const parsed = JSON.parse(d);
+    if(parsed.success()){
+      state = 2;
+      weather_data = parsed.unwrap();
+    } else {
+      state = 12;
+    }
+    } else {
+      state = 11;
+    }
+    } else {
+    state = 11;
+    }
+  } else if(state == 2) {
+    const now = System.time();
+    const div = 1000 * 60 * 60;
+    if(now % div < 10000) {
+      count += 1;
+      if (count == properties["timeseries"].len()) {
+          count = 0;
+          state = 1;
+      }
+    }
+  }
+
+}

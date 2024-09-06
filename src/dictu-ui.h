@@ -173,6 +173,11 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args);
 
 Vec4f colorToVec(DictuVM* vm, Value v);
 
+#ifdef DICTU_UI_MAC_LOCATION
+static Value dictuUIMacLocation(DictuVM *vm, int argCount, Value *args);
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

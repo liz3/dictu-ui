@@ -6,12 +6,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 option(INCLUDE_WINDOW_API "Include the window api(GLFW Wrapper)" ON)
+option(INCLUDE_MAC_LOCATION_API "Include the macOS api to get the locatioon" OFF)
 
 set(DICTU_UI_SOURCES src/dictu-ui.c src/la.c src/skia-wrapper.cc third-party/lodepng/lodepng.c)
 
 if(INCLUDE_WINDOW_API)
  list(APPEND DICTU_UI_SOURCES
   third-party/glad/glad.c)
+endif()
+
+if(APPLE AND INCLUDE_MAC_LOCATION_API)
+ list(APPEND DICTU_UI_SOURCES src/mac_location.mm)
 endif()
 
 add_library(dictu-ui SHARED ${DICTU_UI_SOURCES})
@@ -30,6 +35,10 @@ endif()
 
 
 if(APPLE)
+if(INCLUDE_MAC_LOCATION_API)
+    add_definitions(-DDICTU_UI_MAC_LOCATION)
+        target_link_libraries(dictu-ui PUBLIC "-framework CoreLocation")
+endif()
     target_link_libraries(dictu-ui PUBLIC "-framework Cocoa")
 endif()
 if(WIN32)
