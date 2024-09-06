@@ -2,13 +2,13 @@
 #ifdef DICTU_UI_SOURCES
 #include "GLFW/glfw3.h"
 #endif
-#include "la.h"
 #include "dictu-include.h"
+#include "la.h"
+#include "skia-wrapper.h"
+#include <lodepng.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <lodepng.h>
-#include "skia-wrapper.h"
 
 #ifdef DICTU_UI_WINDOW_API
 List g_list;
@@ -222,17 +222,16 @@ static Value dictuUISkiaSurfaceDrawPathStroke(DictuVM *vm, int argCount,
                  colorToVec(vm, args[3]));
   return NIL_VAL;
 }
-static Value dictuUISkiaSurfaceRotate(DictuVM *vm, int argCount,
-                                              Value *args){
-  if(argCount != 1)
+static Value dictuUISkiaSurfaceRotate(DictuVM *vm, int argCount, Value *args) {
+  if (argCount != 1)
     return NIL_VAL;
   DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
   rotate(instance, AS_NUMBER(args[1]));
   return NIL_VAL;
 }
 static Value dictuUISkiaSurfaceTranslate(DictuVM *vm, int argCount,
-                                              Value *args){
-  if(argCount != 2)
+                                         Value *args) {
+  if (argCount != 2)
     return NIL_VAL;
   DictuSkiaInstance *instance = AS_SKIA_SURFACE(args[0]);
   translate(instance, AS_NUMBER(args[1]), AS_NUMBER(args[2]));
@@ -275,7 +274,8 @@ static Value dictuUISkiaSurface(DictuVM *vm, int argCount, Value *args) {
   defineNative(vm, &abstract->values, "drawPathStroke",
                dictuUISkiaSurfaceDrawPathStroke);
   defineNative(vm, &abstract->values, "createPath", dictuUISkiaSurfaceGetPath);
-  defineNative(vm, &abstract->values, "drawBuffer", dictuUISkiaSurfaceDrawBuffer);
+  defineNative(vm, &abstract->values, "drawBuffer",
+               dictuUISkiaSurfaceDrawBuffer);
   defineNative(vm, &abstract->values, "rotate", dictuUISkiaSurfaceRotate);
   defineNative(vm, &abstract->values, "translate", dictuUISkiaSurfaceTranslate);
 
@@ -433,6 +433,19 @@ static Value dictuUIRender(DictuVM *vm, int argCount, Value *args) {
 static Value dictuUIShouldClose(DictuVM *vm, int argCount, Value *args) {
   UiInstance *instance = AS_UI_INSTANCE(args[0]);
   return BOOL_VAL(glfwWindowShouldClose(instance->window));
+}
+
+static Value dictuUIShowWindow(DictuVM *vm, int argCount, Value *args) {
+  if(argCount < 1 || !IS_BOOL(args[1]))
+    return NIL_VAL;
+  UiInstance *instance = AS_UI_INSTANCE(args[0]);
+  if(AS_BOOL(args[1])) {
+    glfwShowWindow(instance->window);
+
+  } else {
+    glfwHideWindow(instance->window);
+  }
+  return NIL_VAL;
 }
 
 static Value dictuUIClose(DictuVM *vm, int argCount, Value *args) {
@@ -672,6 +685,7 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   if (argCount < 3 || !IS_STRING(args[0]) || !IS_NUMBER(args[1]) ||
       !IS_NUMBER(args[2]))
     return NIL_VAL;
+  glfwDefaultWindowHints();
   ObjString *window_title = AS_STRING(args[0]);
   uint32_t window_width = AS_NUMBER(args[1]);
   uint32_t window_height = AS_NUMBER(args[2]);
@@ -680,6 +694,7 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
       newAbstract(vm, freeDictuIUInstance, DictuIUInstanceToString);
   push(vm, OBJ_VAL(abstract));
   defineNative(vm, &abstract->values, "close", dictuUIClose);
+  defineNative(vm, &abstract->values, "show", dictuUIShowWindow);
   defineNative(vm, &abstract->values, "keyState", dictuUIKeyState);
   defineNative(vm, &abstract->values, "shouldClose", dictuUIShouldClose);
   defineNative(vm, &abstract->values, "copyBuffer", dictuUICopyBuffer);
@@ -701,6 +716,35 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   instance->render_buffer.buffer_size = 0;
   instance->render_buffer.w = 0;
   instance->render_buffer.h = 0;
+  if (argCount == 4 && IS_DICT(args[3])) {
+    ObjDict *d = AS_DICT(args[3]);
+
+    for (size_t i = 0; i < d->capacityMask + 1; i++) {
+      if (IS_EMPTY(d->entries[i].key))
+        continue;
+      ObjString *key = AS_STRING(d->entries[i].key);
+      Value v = d->entries[i].value;
+      if (strcmp(key->chars, "resizable") == 0) {
+        glfwWindowHint(GLFW_RESIZABLE, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "visible") == 0) {
+        glfwWindowHint(GLFW_VISIBLE, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "decorated") == 0) {
+        glfwWindowHint(GLFW_DECORATED, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "focused") == 0) {
+        glfwWindowHint(GLFW_FOCUSED, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "always_top") == 0) {
+        glfwWindowHint(GLFW_FLOATING, AS_BOOL(v));
+      }
+      if (strcmp(key->chars, "transparent") == 0) {
+        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, AS_BOOL(v));
+      }
+    }
+  }
+
   instance->window = glfwCreateWindow(window_width, window_height,
                                       window_title->chars, NULL, NULL);
   glfwMakeContextCurrent(instance->window);
@@ -710,7 +754,6 @@ static Value dictuUICreateInstance(DictuVM *vm, int argCount, Value *args) {
   glfwSetMouseButtonCallback(instance->window, mouse_button_callback);
   glfwSetWindowFocusCallback(instance->window, window_focus_callback);
   glfwSetCursorPosCallback(instance->window, cursor_position_callback);
-
   float xscale, yscale;
   glfwGetWindowContentScale(instance->window, &xscale, &yscale);
   instance->window_width *= xscale;
