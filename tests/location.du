@@ -2,6 +2,7 @@ import HTTP;
 import JSON;
 import System;
 import Datetime;
+import Math;
 from "../mod.du" import mod,waitWindows, getColor;
 
 const TextColor = getColor(0,0,0);
@@ -10,6 +11,8 @@ var state = 0;
 var location = nil;
 var weather_data = nil;
 var count = 0;
+
+var hours = Math.floor(System.time() / 1000 / 60 / 60);
 
 const values = [["air_temperature", "Temperature: {} {}"], ["wind_speed", "Wind wind_speed: {} {}"], ["wind_from_direction", "Wind Direction: {} {}"]];
 
@@ -72,9 +75,11 @@ while(not window.shouldClose()) {
     location = mod.getLocation();
     print(location);
     if(not location["res"]) {
-      location = {"res":true,"lat": 51.5027, "lng": 7.3649};
-    } 
+      state = 10;
+    } else{
+
     state = 1;
+    }
 
     
   } else if (state == 1) {
@@ -97,10 +102,12 @@ while(not window.shouldClose()) {
     state = 11;
     }
   } else if(state == 2) {
-    const now = System.time();
-    const div = 1000 * 60 * 60;
-    if(now % div < 10000) {
+    const now = Math.floor(System.time() / 1000 / 60 / 60);
+   
+    if(now > hours) {
+      hours = now;
       count += 1;
+      const properties = weather_data["properties"];
       if (count == properties["timeseries"].len()) {
           count = 0;
           state = 1;
