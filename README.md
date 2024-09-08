@@ -73,5 +73,61 @@ Then you need to copy the DLL's from `third-party\skia\out\Release` into `build\
 ### MacOS/Linux
 Build the library: `make -j`
 
-## Usage
+# Usage
 Import `mod.du` from the root and use it!
+
+# Docs
+Here is a list with exposed functions
+```
+ColorType = Number(0 = RGBA, 1 = RGB, 2 = BGRA)
+mod.getColor(r: Number, g: Number, r: Number, a:Number=255) -> Dict(Color)
+mod.getRandomColor() -> Dict(Color)
+mod.toWindow(title: string, canvas: SkiaCanvas) -> Window
+mod.waitWindows(windows: List[Window]) -> void
+mod.plot(width: Number, height: Number, entries: List[List[Number]], opts: Dict?) -> SkiaCanvas
+mod.pie(width: Number, height: Number, entries: List[List[Number], name: string?]) -> SkiaCanvas
+mod.graph(name: string, width: Number, height: Number, entries: List[List[List[Number], name: ?string]], opts: Dict?) -> SkiaCanvas
+mod.skiaSurface(width: number, height: number) -> SkiaCanvas
+mod.createWindow(title: string, width: Number, height: Number) -> Window
+mod.decodePng(data: string) -> Dict {data: string, width: Number, height: Number} // color type is RGBA
+mod.encodePng(data: string, width: Number, height: Number) -> string
+
+#IF MAC_LOCATION
+mod.getLocation() -> Dict {res: bool, lat: Number?, lng: Number?}
+#ENDIF
+
+Window.copyBuffer(data: string, width: Number, height: Number, colorType: ColorType)
+Window.render() -> void
+Window.close() -> void
+Window.requestFocus() -> void
+Window.show(show: bool) -> void
+Window.keyState(key: Number) -> Number //(Check GLFW key defs and key state)
+Window.shoudClose() -> bool
+Window.setClearColor(color: Dict(Color)) -> void
+Window.pollEvents() -> List[Dict]
+Window.waitEvents() -> void
+Window.waitEventsTimeout(timeout: Number) -> void
+
+SkiaCanvas.drawLine(xStart: Number, yStart: Number, xEnd: Number, yEnd: Number, width: Number, color: Dict(Color)) -> void
+SkiaCanvas.drawRect(xStart: Number, yStart: Number, width: Number, height: Number, border_radius: Number, color: Dict(Color)) -> void
+SkiaCanvas.drawRectOutline(xStart: Number, yStart: Number, width: Number, height: Number, stroke_width: Number, border_radius: Number, color: Dict(Color)) -> void
+SkiaCanvas.drawText(x: Number, y: Number, content: string, font_size: Number, color: Dict(Color)) -> void
+SkiaCanvas.drawTextWithFont(x: Number, y: Number, content: string, fontName: string, font_size: Number, color: Dict(Color)) -> void
+SkiaCanvas.measureText(content: string, font_size: Number) -> Number
+SkiaCanvas.measureTextWithFont(content: string, font_name: string, font_size: Number) -> Number
+SkiaCanvas.render() -> string // BGRA pixels of rendered buffer, size = canvas.width * canvas.height * (RGB ? 3 : 4)
+SkiaCanvas.clear(color: Dict(Color)) -> void
+SkiaCanvas.drawPath(path: SkiaPath, color: Dict(Color)) -> void // Path is not usable after this
+SkiaCanvas.drawPathStroke(path: SkiaPath, stroke_width: Number, color: Dict(Color)) -> void // Path is not usable after this
+SkiaCanvas.createPath() -> SkiaPath
+SkiaCanvas.drawBuffer(data: string, buffer_width: Number, buffer_height: Number, x: Number, y: Number, width: Number, height: Number, color_type: ColorType = 0)
+SkiaCanvas.rotate(angle: Number) -> void
+SkiaCanvas.translate(x: Number, y: Number) -> void
+
+SkiaCanvas.width: Number
+SkiaCanvas.height: Number
+
+SkiaPath.arcTo(x: Number, y: Number, width: Number, height: Number, startAngle: Number, sweepAngle: Number) -> void
+SkiaPath.moveTo(x: Number, y: Number) -> void
+SkiaPath.lineTo(x: Number, y: Number) -> void
+```
