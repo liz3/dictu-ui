@@ -6,12 +6,13 @@ So it does not only forward a GLFW api but also a small wrapper around Skia.
 
 # Building
 Clone the Repository: `git clone --recurse-submodules https://github.com/liz3/dictu-ui.git`
+
+**Note:** You need a version of dictu build from Dictus [develop branch](https://github.com/dictu-lang/Dictu/tree/develop) because the FFI API is not currently in a release.
 ## Prerequisites
 * Python3
 * On windows: visual studio(MSBuild/msvc).
 * On mac and linux: a recent version of LLVM.
 
-**Note:** You need a dictu build of my fork(branch develop) because it contains patches for the FFI api, not yet merged upstream.
 ## Building Skia
 Skia has no Cmake support so we need to build it seperatedly.
 `cd third-party/skia`

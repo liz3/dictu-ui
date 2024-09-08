@@ -12,13 +12,13 @@ var location = nil;
 var weather_data = nil;
 var count = 0;
 
-var hours = Math.floor(System.time() / 1000 / 60 / 60);
+var hours = Math.floor(System.time() / 60 / 60);
 
-const values = [["air_temperature", "Temperature: {} {}"], ["wind_speed", "Wind wind_speed: {} {}"], ["wind_from_direction", "Wind Direction: {} {}"]];
+const values = [["air_temperature", "Temperature: {} {}"], ["wind_speed", "Wind speed: {} {}"], ["wind_from_direction", "Wind direction: {} {}"]];
 
 
-const window = mod.createWindow("title", 400, 400);
-const canvas = mod.skiaSurface(400, 400);
+const window = mod.createWindow("Weather", 400, 230);
+const canvas = mod.skiaSurface(400, 230);
 while(not window.shouldClose()) {
   const data = canvas.render();
   if(state == 0) {
@@ -32,27 +32,30 @@ while(not window.shouldClose()) {
     canvas.drawText(10, 60, "Lng: {}".format(location["lng"]), 22, TextColor);
   }
   if (state == 2) {
+    var fontColor = nil;
     const properties = weather_data["properties"];
     const ts_entry = properties["timeseries"][count];
     const units = properties["meta"]["units"];
     const data = ts_entry["data"]["instant"]["details"];
     const nextHr = ts_entry["data"]["next_1_hours"]["summary"]["symbol_code"];
     if(nextHr.contains("night")) {
+        fontColor = getColor(110, 111, 112);
         canvas.clear(getColor(27, 29, 92));
     } else {
-      canvas.clear(getColor(48, 101, 171));
+      canvas.clear(getColor(48, 101, 172));
+       fontColor = getColor(213, 221, 222);
     }
     var offset = 20;
     values.forEach(def(entry) => {
-      canvas.drawText(20, offset, entry[1].format(data[entry[0]], units[entry[0]]), 20, getColor(110, 111, 112));
+      canvas.drawText(10, offset, entry[1].format(data[entry[0]], units[entry[0]]), 20, fontColor);
       offset += 25;
     });
-          canvas.drawText(20, offset, "Weather state: {}".format(nextHr), 20, getColor(110, 111, 112));
+          canvas.drawText(10, offset, "Weather state: {}".format(nextHr), 20, fontColor);
 
       const t = Datetime.strftime("%H:%M:%S", System.time());
-    canvas.drawText(10, canvas.height - 15, "{} ({})".format(t, count+1), 14, getColor(110, 111, 112));
+    canvas.drawText(10, canvas.height - 15, "{} ({})".format(t, count+1), 14, fontColor);
     const pos = "{}/{}".format(location["lat"], location["lng"]);
-    canvas.drawText(canvas.width - (10 + canvas.measureText(pos, 14)), canvas.height - 15, pos, 14, getColor(110, 111, 112));
+    canvas.drawText(canvas.width - (10 + canvas.measureText(pos, 14)), canvas.height - 15, pos, 14, fontColor);
   }
   if(state == 10) {
     canvas.clear(getColor(255,255,255));
@@ -102,7 +105,7 @@ while(not window.shouldClose()) {
     state = 11;
     }
   } else if(state == 2) {
-    const now = Math.floor(System.time() / 1000 / 60 / 60);
+    const now = Math.floor(System.time() / 60 / 60);
    
     if(now > hours) {
       hours = now;
