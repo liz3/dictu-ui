@@ -115,7 +115,7 @@ SkiaCanvas.drawText(x: Number, y: Number, content: string, font_size: Number, co
 SkiaCanvas.drawTextWithFont(x: Number, y: Number, content: string, fontName: string, font_size: Number, color: Dict(Color)) -> void
 SkiaCanvas.measureText(content: string, font_size: Number) -> Number
 SkiaCanvas.measureTextWithFont(content: string, font_name: string, font_size: Number) -> Number
-SkiaCanvas.render() -> string // BGRA pixels of rendered buffer, size = canvas.width * canvas.height * (RGB ? 3 : 4)
+SkiaCanvas.render() -> string // BGRA pixels of rendered buffer, size = canvas.width * canvas.height * 4(SkiaCanvas render returns ColorType 2(BGRA))
 SkiaCanvas.clear(color: Dict(Color)) -> void
 SkiaCanvas.drawPath(path: SkiaPath, color: Dict(Color)) -> void // Path is not usable after this
 SkiaCanvas.drawPathStroke(path: SkiaPath, stroke_width: Number, color: Dict(Color)) -> void // Path is not usable after this
