@@ -95,7 +95,7 @@ DictuUI.mod.decodePng(data: string) -> Dict {data: string, width: Number, height
 DictuUI.mod.encodePng(data: string, width: Number, height: Number) -> string
 
 #IF MAC_LOCATION
-mod.getLocation() -> Dict {res: bool, lat: Number?, lng: Number?}
+DictuUI.mod.getLocation() -> Dict {res: bool, lat: Number?, lng: Number?}
 #ENDIF
 
 Window.copyBuffer(data: string, width: Number, height: Number, colorType: ColorType)
@@ -104,7 +104,7 @@ Window.close() -> void
 Window.requestFocus() -> void
 Window.show(show: bool) -> void
 Window.keyState(key: Number) -> Number //(Check GLFW key defs and key state)
-Window.shoudClose() -> bool
+Window.shouldClose() -> bool
 Window.setClearColor(color: Dict(Color)) -> void
 Window.pollEvents() -> List[Dict]
 Window.waitEvents() -> void
