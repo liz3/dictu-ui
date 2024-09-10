@@ -79,18 +79,20 @@ Import `mod.du` from the root and use it!
 # Docs
 Here is a list with exposed functions
 ```
+import "mod.du" as DictuUI;
 ColorType = Number(0 = RGBA, 1 = RGB, 2 = BGRA)
-mod.getColor(r: Number, g: Number, r: Number, a:Number=255) -> Dict(Color)
-mod.getRandomColor() -> Dict(Color)
-mod.toWindow(title: string, canvas: SkiaCanvas) -> Window
-mod.waitWindows(windows: List[Window]) -> void
-mod.plot(width: Number, height: Number, entries: List[List[Number]], opts: Dict?) -> SkiaCanvas
-mod.pie(width: Number, height: Number, entries: List[List[Number], name: string?]) -> SkiaCanvas
-mod.graph(name: string, width: Number, height: Number, entries: List[List[List[Number], name: ?string]], opts: Dict?) -> SkiaCanvas
-mod.skiaSurface(width: number, height: number) -> SkiaCanvas
-mod.createWindow(title: string, width: Number, height: Number) -> Window
-mod.decodePng(data: string) -> Dict {data: string, width: Number, height: Number} // color type is RGBA
-mod.encodePng(data: string, width: Number, height: Number) -> string
+DictuUI.getColor(r: Number, g: Number, r: Number, a:Number=255) -> Dict(Color)
+DictuUI.getRandomColor() -> Dict(Color)
+DictuUI.toWindow(title: string, canvas: SkiaCanvas) -> Window
+DictuUI.waitWindows(windows: List[Window]) -> void
+DictuUI.plot(width: Number, height: Number, entries: List[List[Number]], opts: Dict?) -> SkiaCanvas
+DictuUI.pie(width: Number, height: Number, entries: List[List[Number], name: string?]) -> SkiaCanvas
+DictuUI.graph(name: string, width: Number, height: Number, entries: List[List[List[Number], name: ?string]], opts: Dict?) -> SkiaCanvas
+
+DictuUI.mod.skiaSurface(width: number, height: number) -> SkiaCanvas
+DictuUI.mod.createWindow(title: string, width: Number, height: Number) -> Window
+DictuUI.mod.decodePng(data: string) -> Dict {data: string, width: Number, height: Number} // color type is RGBA
+DictuUI.mod.encodePng(data: string, width: Number, height: Number) -> string
 
 #IF MAC_LOCATION
 mod.getLocation() -> Dict {res: bool, lat: Number?, lng: Number?}
