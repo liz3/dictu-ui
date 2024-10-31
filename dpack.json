@@ -1,0 +1,6 @@
+{
+  "deps": {},
+  "name": "dictu-ui",
+  "version": "0.0.1",
+  "build-cmd": "dictu scripts/build.du"
+}
